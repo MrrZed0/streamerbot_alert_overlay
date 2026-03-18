@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Streamer.bot Alert Overlay</title>
+<style>
+  
+  :root {
+    --blue: #27a8ff;
+    --blue2: #77d8ff;
+    --text: #ffffff;
+    --shadow: 0 0 8px rgba(39,168,255,.85), 0 0 18px rgba(39,168,255,.45), 2px 2px 3px rgba(0,0,0,.8);
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: transparent;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+
+  body {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  #alertWrap {
+    position: relative;
+    width: 380px;
+    margin-top: 14px;
+    opacity: 0;
+    transform: translateY(-35px) scale(0.92);
+    filter: blur(6px);
+  }
+
+  #alertWrap.show {
+    animation: alertIn 0.65s cubic-bezier(.2,.8,.2,1) forwards;
+  }
+
+  #alertWrap.hide {
+    animation: alertOut 0.6s ease forwards;
+  }
+
+  .avatar-shell {
+    width: 182px;
+    height: 182px;
+    margin: 0 auto;
+    position: relative;
+    filter: drop-shadow(0 0 14px rgba(39,168,255,.45));
+  }
+
+  .avatar-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  padding: 6px;
+  background:
+    conic-gradient(
+      from 0deg,
+      #0a6cff 0deg,
+      #27a8ff 60deg,
+      #7fe6ff 120deg,
+      #27a8ff 180deg,
+      #0a6cff 240deg,
+      #7fe6ff 300deg,
+      #0a6cff 360deg
+    );
+    
+  -webkit-mask:
+    radial-gradient(farthest-side, transparent calc(100% - 8px), #000 calc(100% - 7px));
+  mask:
+    radial-gradient(farthest-side, transparent calc(100% - 8px), #000 calc(100% - 7px));
+
+  animation: spinRing 2.4s linear infinite;
+
+  /* extra glow */
+  box-shadow:
+    0 0 10px #27a8ff,
+    0 0 20px rgba(39,168,255,.6),
+    0 0 35px rgba(39,168,255,.4);
+}
+
+  .avatar-border {
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    border: 4px solid #1fb6ff;
+    box-shadow: 0 0 10px rgba(39,168,255,.95), inset 0 0 8px rgba(39,168,255,.35);
+  }
+
+  .avatar {
+    position: absolute;
+    inset: 11px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: rgba(0,0,0,.35);
+  }
+
+  .avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .trigger {
+  display: inline-block;
+    padding: 6px 12px 5px;
+    margin-bottom: 4px;
+    border-radius: 10px;
+    background: linear-gradient(to bottom, #0d2d6d, #10285d);
+    color: var(--text);
+    font-weight: 900;
+    font-size: 18px;
+    line-height: 1;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(69,160,255,0.35);
+    box-shadow:
+      0 0 10px rgba(38,131,255,0.30),
+      inset 0 1px 0 rgba(255,255,255,0.12);
+    text-shadow:
+      0 0 3px rgba(61,183,255,0.95),
+      0 0 8px rgba(61,183,255,0.55),
+      2px 2px 2px rgba(0,0,0,0.95);
+    -webkit-text-stroke: 0.6px rgba(120,190,255,0.7);
+    white-space: nowrap;
+  width: 100%;
+  margin-top: 12px; /* moved down about 2px */
+  text-align: center;
+  color: var(--text);
+  font-size: 25px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+
+  /* stronger shadow */
+  text-shadow:
+    0 0 6px rgba(39,168,255,1),
+    0 0 14px rgba(39,168,255,.75),
+    0 3px 4px rgba(0,0,0,.95);
+
+  line-height: 1.05;
+  word-break: break-word;
+}
+
+  .banner {
+    position: relative;
+    width: 100%;
+    height: 106px;
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(0 0 12px rgba(31,95,180,.5));
+  }
+
+  .banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+
+  .target {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 74%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: var(--text);
+    font-weight: 900;
+    text-shadow: var(--shadow);
+    white-space: nowrap;
+    overflow: hidden;
+    line-height: 1;
+    padding: 0 8px;
+  }
+
+  .debug {
+    position: fixed;
+    bottom: 8px;
+    left: 8px;
+    color: #9fe6ff;
+    font-size: 12px;
+    text-shadow: 0 0 4px #000;
+    background: rgba(0,0,0,.35);
+    padding: 4px 6px;
+    border-radius: 6px;
+    pointer-events: none;
+    display: none;
+  }
+
+  @keyframes spinRing {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes alertIn {
+    0% {
+      opacity: 0;
+      transform: translateY(-35px) scale(0.92);
+      filter: blur(6px);
+    }
+    60% {
+      opacity: 1;
+      transform: translateY(4px) scale(1.02);
+      filter: blur(0);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      filter: blur(0);
+    }
+  }
+
+  @keyframes alertOut {
+    0% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      filter: blur(0);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-20px) scale(0.94);
+      filter: blur(5px);
+    }
+  }
+</style>
+</head>
+<body>
+  <div id="alertWrap">
+    <div class="avatar-shell">
+      <div class="avatar-ring"></div>
+      <div class="avatar-border"></div>
+      <div class="avatar">
+        <img id="profileImage" src="" alt="profile" />
+      </div>
+    </div>
+
+    <div id="triggerName" class="trigger">New Follow</div>
+
+    <div class="banner">
+      <img src="banner_background.png" alt="banner" />
+      <div id="targetUser" class="target">Stefxx96</div>
+    </div>
+  </div>
+
+  <div id="debug" class="debug"></div>
+
+<script>
+(() => {
+  const WS_URL = 'ws://127.0.0.1:8080/';
+  const SHOW_MS = 7000;
+  const debugEnabled = true;
+
+  const wrap = document.getElementById('alertWrap');
+  const profileImage = document.getElementById('profileImage');
+  const triggerName = document.getElementById('triggerName');
+  const targetUser = document.getElementById('targetUser');
+  const debug = document.getElementById('debug');
+
+  let ws = null;
+  let reconnectTimer = null;
+  let hideTimer = null;
+
+  function log(msg) {
+    console.log('[overlay]', msg);
+    if (debugEnabled) {
+      debug.style.display = 'block';
+      debug.textContent = msg;
+    }
+  }
+
+  function fitText(element, maxPx = 42, minPx = 16) {
+    let size = maxPx;
+    element.style.fontSize = size + 'px';
+    while (size > minPx && element.scrollWidth > element.clientWidth) {
+      size -= 1;
+      element.style.fontSize = size + 'px';
+    }
+  }
+
+  function showAlert(data) {
+    const img = data.targetUserProfileImageUrl || '';
+    const trig = data.triggerName || '';
+    const user = data.targetUser || '';
+
+    profileImage.src = img;
+    triggerName.textContent = trig;
+    targetUser.textContent = user;
+
+    triggerName.style.fontSize = '25px';
+    targetUser.style.fontSize = '42px';
+    fitText(triggerName, 30, 18);
+    fitText(targetUser, 42, 16);
+
+    wrap.classList.remove('hide');
+    void wrap.offsetWidth;
+    wrap.classList.add('show');
+
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => {
+      wrap.classList.remove('show');
+      wrap.classList.add('hide');
+    }, SHOW_MS);
+  }
+
+  function tryHandleMessage(raw) {
+    let msg;
+    try {
+      msg = JSON.parse(raw);
+    } catch {
+      return false;
+    }
+
+    if (msg && msg.event && msg.data && msg.data.type === 'custom.alert.overlay') {
+      showAlert(msg.data.payload || {});
+      return true;
+    }
+
+    if (msg && msg.type === 'custom.alert.overlay' && msg.payload) {
+      showAlert(msg.payload);
+      return true;
+    }
+
+    if (msg && msg.targetUser && msg.triggerName && msg.targetUserProfileImageUrl) {
+      showAlert(msg);
+      return true;
+    }
+
+    return false;
+  }
+
+  function connect() {
+    clearTimeout(reconnectTimer);
+    log('Connecting to Streamer.bot...');
+
+    ws = new WebSocket(WS_URL);
+
+    ws.onopen = () => {
+      log('Connected');
+      try {
+        ws.send(JSON.stringify({
+          request: 'Subscribe',
+          id: 'sub-custom-alert-overlay',
+          events: {
+            General: ['Custom']
+          }
+        }));
+      } catch (e) {
+        console.warn('Subscribe failed', e);
+      }
+    };
+
+    ws.onmessage = (event) => {
+      const handled = tryHandleMessage(event.data);
+      if (!handled) {
+        console.log('[overlay] Unhandled message:', event.data);
+      }
+    };
+
+    ws.onerror = () => {
+      log('WebSocket error');
+    };
+
+    ws.onclose = () => {
+      log('Disconnected, retrying...');
+      reconnectTimer = setTimeout(connect, 2000);
+    };
+  }
+
+  connect();
+
+  window.testAlert = function () {
+    showAlert({
+      targetUserProfileImageUrl: 'https://static-cdn.jtvnw.net/jtv_user_pictures/1691d15c-dd94-4bef-acab-1ae6726a709d-profile_image-300x300.png',
+      triggerName: 'New Follow',
+      targetUser: 'Stefxx96'
+    });
+  };
+})();
+</script>
+</body>
+</html>
