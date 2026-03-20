@@ -13,7 +13,7 @@ This overlay is designed for:
 
 It features a **circular animated avatar ring**, glowing text, and a dynamic banner display.
 
-![Image](https://github.com/MrrZed0/Streamerbot_Bits_Cheers_Rain_Overlay/blob/main/222222222222.gif?raw=true)
+![Image](https://github.com/MrrZed0/streamerbot_alert_overlay/blob/main/0318%20(5).gif?raw=true)
 
 ---
 
